@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    @keyframes pulseGlow {
+        0% { box-shadow: 0 0 10px rgba(255, 133, 162, 0.4); }
+        50% { box-shadow: 0 0 25px rgba(255, 133, 162, 0.8); }
+        100% { box-shadow: 0 0 10px rgba(255, 133, 162, 0.4); }
+    }
+
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .intro-container {
+        text-align: center;
+        font-family: 'Courier New', Courier, monospace;
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 40px;
+        background: #1a1a1a;
+        color: #fff;
+        border: 2px solid #ff85a2;
+        border-radius: 20px;
+        animation: pulseGlow 3s infinite ease-in-out;
+    }
+
+    h1 {
+        font-size: 3rem;
+        color: #ff85a2;
+        text-transform: uppercase;
+        letter-spacing: 5px;
+        margin-bottom: 30px;
+        text-shadow: 0 0 10px #ff85a2;
+    }
+
+    .rules-list {
+        list-style: none;
+        padding: 0;
+        text-align: left;
+        display: inline-block;
+        margin: 20px 0;
+    }
+
+    .rules-list li {
+        font-size: 1.1rem;
+        margin: 15px 0;
+        padding-left: 30px;
+        position: relative;
+        opacity: 0;
+        animation: slideIn 0.5s forwards;
+    }
+
+    /* Staggered animation for list items */
+    .rules-list li:nth-child(1) { animation-delay: 0.5s; }
+    .rules-list li:nth-child(2) { animation-delay: 1.0s; }
+    .rules-list li:nth-child(3) { animation-delay: 1.5s; }
+    .rules-list li:nth-child(4) { animation-delay: 2.0s; }
+
+    .rules-list li::before {
+        content: '▶';
+        position: absolute;
+        left: 0;
+        color: #ff85a2;
+    }
+
+    .warning {
+        color: #7ae582;
+        font-size: 0.8rem;
+        margin-top: 20px;
+        text-transform: uppercase;
+    }
+
+    .begin-btn {
+        margin-top: 40px;
+        padding: 15px 50px;
+        background: #ff85a2;
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    .begin-btn:hover {
+        background: #fff;
+        color: #ff85a2;
+        transform: scale(1.1);
+        box-shadow: 0 0 30px #fff;
+    }
+</style>
+
+<div class="intro-container">
+    <h1>Mission Start</h1>
+    <p style="color: #aaa;">SYSTEM STATUS: ONLINE</p>
+    
+    <ul class="rules-list">
+        <li>YOU MUST PLAY ON A DESKTOP</li>
+        <li>MUST COMPLETE GAME IN ONE RUN</li>
+        <li>MAKE SURE YOU HAVE YOUR NEW KEYBOARD</li>
+        <li>NO CALCULATORS</li>
+    </ul>
+
+    <p class="warning">// Prepare yourself. No turning back once you begin.</p>
+
+    <form action="/game/1">
+        <button class="begin-btn">Inisitalize Game</button>
+    </form>
+</div>
+
+<script>
+    // A little bit of witty console logging for the developer/user to find
+    console.log("%c KEYBOARD DETECTED: Mechanical switch profile confirmed. Good luck. ", "background: #ff85a2; color: #fff; font-weight: bold;");
+</script>
+{% endblock %}

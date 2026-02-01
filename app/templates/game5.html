@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .game-container { text-align: center; font-family: 'Segoe UI', sans-serif; }
+    .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        width: 250px;
+        margin: 20px auto;
+    }
+    .btn {
+        width: 100px;
+        height: 100px;
+        border-radius: 15px;
+        cursor: pointer;
+        opacity: 0.3;
+        transition: opacity 0.1s, transform 0.1s;
+        border: 4px solid rgba(0,0,0,0.1);
+    }
+    .btn.active { opacity: 1; transform: scale(1.05); border-color: white; }
+    
+    #green { background-color: #2ecc71; }
+    #red { background-color: #e74c3c; }
+    #blue { background-color: #3498db; }
+    #yellow { background-color: #f1c40f; }
+
+    .level-indicator { font-size: 1.2rem; font-weight: bold; color: #ff85a2; margin-bottom: 5px; }
+    #status { height: 30px; margin-top: 10px; font-weight: bold; color: #ff4d4d; }
+</style>
+
+<div class="game-container">
+    <div class="level-indicator" id="level-text">Level 1/3 (Length: 6)</div>
+    <p id="instruction">Get ready...</p>
+    
+    <div class="grid">
+        <div id="green" class="btn" onclick="userClick(0)"></div>
+        <div id="red" class="btn" onclick="userClick(1)"></div>
+        <div id="blue" class="btn" onclick="userClick(2)"></div>
+        <div id="yellow" class="btn" onclick="userClick(3)"></div>
+    </div>
+
+    <p id="status"></p>
+</div>
+
+<form id="next" method="post" action="/complete/5"></form>
+
+<script>
+const colors = ["green", "red", "blue", "yellow"];
+const colorElements = colors.map(id => document.getElementById(id));
+const statusText = document.getElementById("status");
+const instruction = document.getElementById("instruction");
+const levelDisplay = document.getElementById("level-text");
+
+// Levels configuration
+const levels = [6, 8, 10]; 
+let currentLevelIndex = 0;
+let sequence = [];
+let userSequence = [];
+let isWatching = true;
+
+function startLevel() {
+    const targetLength = levels[currentLevelIndex];
+    levelDisplay.innerText = `Level ${currentLevelIndex + 1}/3 (Length: ${targetLength})`;
+    
+    // Generate new random sequence for this level
+    sequence = Array.from({length: targetLength}, () => Math.floor(Math.random() * 4));
+    userSequence = [];
+    isWatching = true;
+    
+    instruction.innerText = "Watch carefully...";
+    statusText.innerText = "";
+    
+    setTimeout(() => playSequence(), 1000);
+}
+
+async function playSequence() {
+    for (let i = 0; i < sequence.length; i++) {
+        await flashColor(sequence[i]);
+        await new Promise(r => setTimeout(r, 150)); // Short gap
+    }
+    isWatching = false;
+    instruction.innerText = "Your turn!";
+}
+
+function flashColor(index) {
+    return new Promise(resolve => {
+        colorElements[index].classList.add("active");
+        setTimeout(() => {
+            colorElements[index].classList.remove("active");
+            setTimeout(resolve, 250); // Flash duration
+        }, 450);
+    });
+}
+
+function userClick(index) {
+    if (isWatching) return;
+
+    // Visual feedback for click
+    colorElements[index].classList.add("active");
+    setTimeout(() => colorElements[index].classList.remove("active"), 100);
+
+    userSequence.push(index);
+    
+    // Check for mistake
+    if (userSequence[userSequence.length - 1] !== sequence[userSequence.length - 1]) {
+        statusText.style.color = "#ff4d4d";
+        statusText.innerText = "Not quite hehe... try again!";
+        isWatching = true; // Disable clicks during reset
+        setTimeout(() => {
+            startLevel(); // Restarts current level with new sequence
+        }, 1500);
+        return;
+    }
+
+    // Check for level completion
+    if (userSequence.length === sequence.length) {
+        isWatching = true;
+        currentLevelIndex++;
+
+        if (currentLevelIndex < levels.length) {
+            statusText.style.color = "#7ae582";
+            statusText.innerText = "Level Complete! Getting harder (just like me :p)";
+            setTimeout(() => {
+                startLevel();
+            }, 1500);
+        } else {
+            // All levels done!
+            statusText.style.color = "#7ae582";
+            statusText.innerText = "MASTER MIND! ❤️";
+            setTimeout(() => document.getElementById("next").submit(), 1500);
+        }
+    }
+}
+
+// Initial Start
+startLevel();
+</script>
+{% endblock %}

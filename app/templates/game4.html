@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .game-container { text-align: center; font-family: sans-serif; margin-top: 50px; }
+    #box { padding: 10px; width: 300px; font-size: 1.2rem; border: 2px solid #ccc; outline: none; }
+    #box.error-border { border-color: #ff4d4d; background-color: #fff0f0; }
+    #status { color: #ff4d4d; font-weight: bold; height: 20px; margin-top: 10px; }
+    .target-text { font-size: 1.4rem; color: #555; margin-bottom: 20px; }
+    #timer { font-size: 2rem; font-weight: bold; color: #ff85a2; }
+</style>
+
+<div class="game-container">
+    <h2>Typing Test</h2>
+    <p>Type the sentence below in under 5 seconds!</p>
+    <p class="target-text"><b>Wow what a wonderful day it is today</b></p>
+
+    <input id="box" autocomplete="off" placeholder="Start typing here...">
+    <p id="status"></p>
+    <p id="timer">5.00</p>
+</div>
+
+<form id="next" method="post" action="/complete/4"></form>
+
+<script>
+const target = "Wow what a wonderful day it is today";
+const box = document.getElementById("box");
+const timerDisplay = document.getElementById("timer");
+const statusDisplay = document.getElementById("status");
+const nextForm = document.getElementById("next");
+
+let startTime = null;
+let timerInterval = null;
+let gameActive = true;
+
+// Prevent Backspace as requested
+box.onkeydown = (e) => {
+    if (e.key === "Backspace") {
+        e.preventDefault();
+    }
+};
+
+box.oninput = () => {
+    if (!gameActive) return;
+
+    // Start timer on first character
+    if (!startTime) {
+        startTime = Date.now();
+        startTimer();
+    }
+
+    const currentInput = box.value;
+    const timeElapsed = (Date.now() - startTime) / 1000;
+
+    // 1. Check for immediate typos
+    if (!target.startsWith(currentInput)) {
+        triggerError("WRONG TYPE!");
+        return;
+    }
+
+    // 2. Check for time limit violation
+    if (timeElapsed > 5) {
+        triggerError("TOO SLOW!");
+        return;
+    }
+
+    // 3. Check for Win
+    if (currentInput === target) {
+        clearInterval(timerInterval);
+        nextForm.submit();
+    }
+};
+
+function startTimer() {
+    timerInterval = setInterval(() => {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const remaining = Math.max(0, 5 - elapsed);
+        timerDisplay.innerText = remaining.toFixed(2);
+
+        if (remaining <= 0) {
+            triggerError("OUT OF TIME!");
+        }
+    }, 10);
+}
+
+function triggerError(msg) {
+    // Stop game
+    gameActive = false;
+    clearInterval(timerInterval);
+    
+    // UI Feedback
+    statusDisplay.innerText = msg;
+    box.classList.add("error-border");
+    box.disabled = true;
+
+    // Reset after a short delay so they can see the error
+    setTimeout(() => {
+        resetGame();
+    }, 1500);
+}
+
+function resetGame() {
+    startTime = null;
+    gameActive = true;
+    box.value = "";
+    box.disabled = false;
+    box.classList.remove("error-border");
+    statusDisplay.innerText = "";
+    timerDisplay.innerText = "5.00";
+    box.focus();
+}
+</script>
+{% endblock %}

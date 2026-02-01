@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Photo Math</h2>
+
+<!-- Display the photo she already has -->
+<img src="/static/images/couple.jpg" width="300" alt="Couple Photo">
+
+<p>
+  Find the date this photo was taken.<br>
+  Then compute:
+</p>
+
+<p style="font-size: 1.2em;">
+  <b>(month × day) ÷ year</b>
+</p>
+
+<p>
+  <i>Round your answer to <b>three decimal places</b> before submitting.</i><br>
+</p>
+
+<!-- Long division help video -->
+<p>If you need help with long division, check this video:</p>
+
+<iframe width="400" height="225"
+  src="https://www.youtube.com/embed/xMQTMK5AO_A"
+  title="Long Division Tutorial"
+  frameborder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowfullscreen>
+</iframe>
+
+<!-- Answer input -->
+<p>
+  <input id="ans" placeholder="Your answer (e.g., .935)">
+  <button onclick="check()">Submit</button>
+</p>
+
+<form id="next" method="post" action="/complete/3"></form>
+
+<script>
+function check() {
+  const val = ans.value.trim();
+  // Accept either "0.055" or ".055"
+  if (val === "0.055" || val === ".055") {
+    document.getElementById("next").submit();
+  } else {
+    alert("Nah recalculate that shit");
+  }
+}
+</script>
+
+{% endblock %}
+

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    body {
+        background-color: #1a1a1a;
+        color: white;
+        font-family: 'Courier New', monospace;
+        overflow: hidden; /* Keeps confetti inside the viewport */
+    }
+
+    .victory-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        text-align: center;
+    }
+
+    .prize-box {
+        background: rgba(255, 133, 162, 0.1);
+        border: 3px solid #ff85a2;
+        padding: 40px;
+        border-radius: 30px;
+        box-shadow: 0 0 50px rgba(255, 133, 162, 0.5);
+        animation: scaleIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes scaleIn {
+        from { transform: scale(0); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    .glitch {
+        font-size: 5rem;
+        font-weight: bold;
+        color: #fff;
+        text-shadow: 0 0 10px #ff85a2, 0 0 20px #ff85a2;
+        margin: 20px 0;
+        letter-spacing: 10px;
+    }
+
+    h2 {
+        color: #7ae582;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 0;
+    }
+
+    /* Confetti Styling */
+    .confetti {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background-color: #ff85a2;
+        animation: fall linear forwards;
+    }
+
+    @keyframes fall {
+        to {
+            transform: translateY(100vh) rotate(720deg);
+        }
+    }
+</style>
+
+<div class="victory-container">
+    <div class="prize-box">
+        <h1>🎉 MISSION COMPLETE 🎉</h1>
+        <h2>The Secret Decoder Word:</h2>
+        <div class="glitch">STARBIES</div>
+        <p style="color: #aaa; margin-top: 20px;">Text this to your bf to claim your reward.</p>
+    </div>
+</div>
+
+<script>
+    function createConfetti() {
+        const colors = ['#ff85a2', '#7ae582', '#3498db', '#f1c40f', '#ffffff'];
+        const shapes = ['50%', '0%']; // Circles and Squares
+        
+        for (let i = 0; i < 100; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            
+            // Randomize properties
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.borderRadius = shapes[Math.floor(Math.random() * shapes.length)];
+            confetti.style.width = Math.random() * 10 + 5 + 'px';
+            confetti.style.height = confetti.style.width;
+            
+            // Randomize animation
+            const duration = Math.random() * 3 + 2;
+            confetti.style.animationDuration = duration + 's';
+            confetti.style.opacity = Math.random();
+            confetti.style.animationDelay = Math.random() * 2 + 's';
+
+            document.body.appendChild(confetti);
+
+            // Cleanup
+            setTimeout(() => {
+                confetti.remove();
+            }, (duration + 2) * 1000);
+        }
+    }
+
+    // Run confetti on load
+    createConfetti();
+    // Re-run every few seconds for a continuous party
+    setInterval(createConfetti, 4000);
+</script>
+{% endblock %}

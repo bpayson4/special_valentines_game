@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    body { overflow: hidden; } /* Prevents scrollbars during the run */
+    
+    .game-area {
+        position: relative;
+        width: 100vw;
+        height: 80vh;
+    }
+
+    #penguin {
+        position: absolute;
+        font-size: 100px;
+        cursor: crosshair;
+        user-select: none;
+        z-index: 100;
+        display: block;
+        /* Slight tilt to look like it's sliding */
+        transform: rotate(10deg);
+    }
+
+    #retry {
+        position: absolute;
+        top: 20%;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 15px 25px;
+        background: #ff85a2;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+</style>
+
+<div class="game-area">
+    <h2>Catch the waddling penguin!</h2>
+    <div id="penguin">🐧</div>
+    <button id="retry" style="display:none;">Missed it? Too slow… try again</button>
+</div>
+
+<form id="next" method="post" action="/complete/1"></form>
+
+<script>
+const penguin = document.getElementById("penguin");
+const retryBtn = document.getElementById("retry");
+let animationFrame;
+let startTime;
+
+function movePenguin() {
+    const elapsed = (Date.now() - startTime) / 1000; // seconds
+    const duration = 2.5; // Total time to cross screen
+    const progress = elapsed / duration;
+
+    if (progress <= 1.2) { // Allow slightly past 100vw
+        // Horizontal: -150px to 110% of viewport
+        const x = -150 + (window.innerWidth + 300) * progress;
+        
+        // Vertical: Sine wave movement (up and down)
+        // Math.sin(progress * frequency) * amplitude
+        const y = (window.innerHeight / 2) + Math.sin(progress * 12) * 150;
+        
+        // Jitter: Small random offset for "waddle"
+        const jitterX = (Math.random() - 0.5) * 15;
+        const jitterY = (Math.random() - 0.5) * 15;
+
+        penguin.style.left = `${x + jitterX}px`;
+        penguin.style.top = `${y + jitterY}px`;
+        
+        // Rotate penguin based on the wave
+        penguin.style.transform = `translateY(-50%) rotate(${Math.cos(progress * 12) * 20}deg)`;
+
+        animationFrame = requestAnimationFrame(movePenguin);
+    } else {
+        retryBtn.style.display = "block";
+    }
+}
+
+function startPenguinRun() {
+    cancelAnimationFrame(animationFrame);
+    retryBtn.style.display = "none";
+    startTime = Date.now();
+    movePenguin();
+}
+
+penguin.onclick = (e) => {
+    e.stopPropagation();
+    cancelAnimationFrame(animationFrame);
+    // Success effect
+    penguin.innerText = "❤️";
+    setTimeout(() => {
+        document.getElementById("next").submit();
+    }, 500);
+};
+
+retryBtn.onclick = startPenguinRun;
+
+// Initial start
+startPenguinRun();
+</script>
+{% endblock %}

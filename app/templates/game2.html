@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    :root {
+        --primary-pink: #ff85a2;
+        --success-green: #7ae582;
+        --border-color: #ffccd5;
+    }
+
+    .game-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-family: 'Segoe UI', sans-serif;
+        max-width: 600px;
+        margin: auto;
+        user-select: none; /* Prevents text highlighting while clicking */
+    }
+
+    .grid {
+        display: grid;
+        /* 9 Columns to fit 'VALENTINE' */
+        grid-template-columns: repeat(10, 40px); 
+        gap: 5px;
+        margin: 20px 0;
+        background: #fff0f3;
+        padding: 10px;
+        border-radius: 8px;
+        border: 2px solid var(--primary-pink);
+    }
+
+    .letter {
+        width: 40px;
+        height: 40px;
+        background: white;
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 1.1rem;
+        transition: background 0.2s;
+    }
+
+    /* Visual Feedback */
+    .letter.selected { background-color: var(--primary-pink); color: white; }
+    .letter.found { background-color: var(--success-green); color: white; }
+    .letter.error { animation: shake 0.3s; background-color: #ff4d4d; }
+
+    @keyframes shake {
+        0% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+        100% { transform: translateX(0); }
+    }
+
+    .word-bank {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        max-width: 400px;
+    }
+
+    .word-item {
+        padding: 5px 10px;
+        background: #eee;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        color: #555;
+    }
+    
+    .word-item.found {
+        text-decoration: line-through;
+        background-color: var(--success-green);
+        color: white;
+    }
+</style>
+
+<div class="game-container">
+    <h2>Valentine Search</h2>
+    <p>Find the words horizontally, vertically, or diagonally.</p>
+    
+    <div class="grid" id="grid"></div>
+
+    <div class="word-bank" id="word-bank"></div>
+    
+    <button onclick="resetSelection()" style="margin-top:15px; padding: 8px 16px; cursor:pointer;">
+        Reset Current Selection
+    </button>
+</div>
+
+<form id="next" method="post" action="/complete/2"></form>
+
+<script>
+    const GRID_SIZE = 10; 
+
+    const words = ["LOVE", "HEART", "KISSES", "CUDDLES", "CUTE", "MASSAGE", "VALENTINE"];
+
+    // 10x10 Grid (100 Letters)
+    // Uses backwards, vertical, and horizontal placement.
+    // No words intersect.
+    const gridLetters = [
+        // Row 0: 'CUDDLES' starts at index 2
+        'M','Q','C','U','D','D','L','E','S','P', 
+        // Row 1: Noise
+        'A','Z','W','X','Y','B','N','M','K','L', 
+        // Row 2: 'LOVE' starts at index 2
+        'S','F','L','E','V','T','R','A','E','H', 
+        // Row 3: Noise
+        'S','R','I','O','O','K','M','N','B','E', 
+        // Row 4: 'HEART' is Backwards (indices 6 -> 2)
+        'A','Q','T','R','V','E','H','U','T','O', 
+        // Row 5: 'CUTE' starts at index 5 (Vertical Down)
+        'G','Y','U','I','O','E','A','U','D','F', 
+        // Row 6: End of 'MASSAGE' at index 0
+        'E','W','Q','A','Z','U','C','J','K','L', 
+        // Row 7: 'KISSES' is Backwards (indices 7 -> 2)
+        'M','N','S','E','S','S','I','K','P','O', 
+        // Row 8: End of 'CUTE' at index 5
+        'B','V','C','X','Z','E','R','T','Y','U', 
+        // Row 9: 'VALENTINE' is Backwards (indices 8 -> 0)
+        'E','N','I','T','N','E','L','A','V','M'  
+    ];
+
+    let foundWords = [];
+    let currentPath = []; // Stores indices [0, 1, 2...]
+
+    function init() {
+        const gridEl = document.getElementById("grid");
+        const bankEl = document.getElementById("word-bank");
+
+        // Render Grid
+        gridLetters.forEach((char, index) => {
+            const div = document.createElement("div");
+            div.classList.add("letter");
+            div.innerText = char;
+            div.dataset.index = index;
+            div.onclick = () => handleInput(index, div);
+            gridEl.appendChild(div);
+        });
+
+        // Render Word Bank
+        words.forEach(w => {
+            const div = document.createElement("div");
+            div.classList.add("word-item");
+            div.id = `word-${w}`;
+            div.innerText = w;
+            bankEl.appendChild(div);
+        });
+    }
+
+    function handleInput(index, div) {
+        if (div.classList.contains('found')) return; // Ignore found words
+        
+        // 1. If starting a new selection
+        if (currentPath.length === 0) {
+            addToPath(index, div);
+            return;
+        }
+
+        const lastIndex = currentPath[currentPath.length - 1];
+
+        // 2. Allow Deselect (Clicking the last one again)
+        if (index === lastIndex) {
+            resetSelection();
+            return;
+        }
+
+        // 3. Validation Logic
+        if (isValidMove(lastIndex, index)) {
+            addToPath(index, div);
+            checkWin();
+        } else {
+            // Visual feedback for invalid move
+            div.classList.add('error');
+            setTimeout(() => div.classList.remove('error'), 300);
+        }
+    }
+
+    function isValidMove(prevIdx, newIdx) {
+        const r1 = Math.floor(prevIdx / GRID_SIZE);
+        const c1 = prevIdx % GRID_SIZE;
+        const r2 = Math.floor(newIdx / GRID_SIZE);
+        const c2 = newIdx % GRID_SIZE;
+
+        const rowDiff = r2 - r1;
+        const colDiff = c2 - c1;
+
+        // Check A: Is it an immediate neighbor?
+        if (Math.abs(rowDiff) > 1 || Math.abs(colDiff) > 1) return false;
+
+        // Check B: If we have 2+ letters, is the direction consistent?
+        if (currentPath.length >= 2) {
+            const firstIdx = currentPath[0];
+            const r0 = Math.floor(firstIdx / GRID_SIZE);
+            const c0 = firstIdx % GRID_SIZE;
+            
+            // Calculate established direction
+            // Direction from Index 0 to Index 1
+            const secondIdx = currentPath[1];
+            const lockRowDir = Math.floor(secondIdx / GRID_SIZE) - r0;
+            const lockColDir = (secondIdx % GRID_SIZE) - c0;
+
+            if (rowDiff !== lockRowDir || colDiff !== lockColDir) {
+                return false; // User changed direction mid-word
+            }
+        }
+
+        return true;
+    }
+
+    function addToPath(index, div) {
+        currentPath.push(index);
+        div.classList.add('selected');
+    }
+
+    function checkWin() {
+        const currentWord = currentPath.map(i => gridLetters[i]).join("");
+
+        if (words.includes(currentWord) && !foundWords.includes(currentWord)) {
+            // Word Found!
+            foundWords.push(currentWord);
+            
+            // Mark Grid
+            currentPath.forEach(i => {
+                const el = document.querySelector(`div[data-index='${i}']`);
+                el.classList.remove('selected');
+                el.classList.add('found');
+            });
+
+            // Mark Bank
+            document.getElementById(`word-${currentWord}`).classList.add('found');
+            
+            // Reset Path
+            currentPath = [];
+
+            // Check Game Over
+            if (foundWords.length === words.length) {
+                setTimeout(() => document.getElementById("next").submit(), 1000);
+            }
+        }
+    }
+
+    function resetSelection() {
+        currentPath.forEach(i => {
+            const el = document.querySelector(`div[data-index='${i}']`);
+            el.classList.remove('selected');
+        });
+        currentPath = [];
+    }
+
+    init();
+</script>
+{% endblock %}

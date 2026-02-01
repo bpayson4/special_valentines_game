@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .game-container {
+        text-align: center;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .image-wrapper {
+        position: relative; /* This keeps the debug box anchored to the image */
+        display: inline-block;
+        cursor: crosshair;
+        border: 5px solid white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    #rocks-img {
+        display: block;
+        max-width: 600px;
+    }
+
+    /* This is the box that only shows when debug is true */
+    .debug-target {
+        position: absolute;
+        border: 2px dashed #ff4d4d;
+        background: rgba(255, 77, 77, 0.3);
+        pointer-events: none; /* Crucial: clicks go through this to the image */
+        z-index: 10;
+    }
+
+    #message {
+        margin-top: 15px;
+        font-weight: bold;
+        font-size: 1.2rem;
+        height: 30px;
+        transition: opacity 0.3s ease;
+    }
+</style>
+
+<div class="game-container">
+    <h2>Find my favorite rock</h2>
+    <p>Click on the special one!</p>
+
+    <div class="image-wrapper" id="wrapper">
+        <img id="rocks-img" src="/static/images/rocks.jpg" width="600" onclick="checkClick(event)">
+        </div>
+
+    <p id="message"></p>
+</div>
+
+<form id="next" method="post" action="/complete/7"></form>
+
+<script>
+    /* --- CONFIGURATION --- */
+    const DEBUG_MODE = false; // Set this to FALSE to hide the box for the final game!
+    
+    // Change these numbers to move your "Favorite" area
+    const target = {
+        x: 50,    // Left position
+        y: 760,    // Top position
+        w: 20,     // Width of the box
+        h: 20      // Height of the box
+    };
+    /* --------------------- */
+
+    const msg = document.getElementById("message");
+
+    // Logic to show/hide the outline based on DEBUG_MODE
+    function init() {
+        if (DEBUG_MODE) {
+            const debugBox = document.createElement('div');
+            debugBox.className = 'debug-target';
+            debugBox.style.left = target.x + "px";
+            debugBox.style.top = target.y + "px";
+            debugBox.style.width = target.w + "px";
+            debugBox.style.height = target.h + "px";
+            document.getElementById('wrapper').appendChild(debugBox);
+            console.log("Debug Mode Active: Red box shows the target area.");
+        }
+    }
+
+    function checkClick(e) {
+        // Calculate click relative to the image itself
+        const clickX = e.offsetX;
+        const clickY = e.offsetY;
+
+        // Check if click is within the bounding box
+        const isHit = (clickX >= target.x && clickX <= (target.x + target.w)) &&
+                      (clickY >= target.y && clickY <= (target.y + target.h));
+
+        if (isHit) {
+            msg.style.color = "#7ae582";
+            msg.innerText = "That's my favorite!";
+            msg.style.opacity = "1";
+            setTimeout(() => document.getElementById("next").submit(), 1200);
+        } else {
+            msg.style.color = "#ff4d4d";
+            msg.innerText = "Nope";
+            msg.style.opacity = "1";
+            // Quickly fade out "Nope" so they can try again
+            setTimeout(() => { msg.style.opacity = "0"; }, 800);
+        }
+    }
+
+    init();
+</script>
+{% endblock %}

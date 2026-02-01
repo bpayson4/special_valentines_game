@@ -1,0 +1,35 @@
+valentines_game/
+│
+├── app/
+│   ├── main.py
+│   ├── routes.py
+│   ├── game_logic.py
+│   ├── templates/
+│   │   ├── base.html
+│   │   ├── home.html
+│   │   ├── game1_penguin.html
+│   │   ├── game2_strands.html
+│   │   ├── game3_photo_math.html
+│   │   ├── game4_typing.html
+│   │   ├── game5_memory.html
+│   │   ├── game6_killer_sudoku.html
+│   │   ├── game7_rock.html
+│   │   ├── game8_math.html
+│   │   └── final.html
+│   │
+│   └── static/
+│       ├── css/
+│       │   └── style.css
+│       ├── js/
+│       │   ├── game1.js
+│       │   ├── game2.js
+│       │   ├── ...
+│       ├── images/
+│       │   ├── couple.jpg        ← IMG_2222.JPG
+│       │   └── rocks.jpg         ← IMG_3619.jpg
+│       └── sounds/
+│           ├── win1.mp3
+│           ├── win2.mp3
+│           └── final.mp3
+│
+└── requirements.txt
